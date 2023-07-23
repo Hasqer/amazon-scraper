@@ -82,33 +82,40 @@ def scrape(url, proxy, headers):
 
 
 while True:
-    sleep(5)
     with open('output.txt', 'r') as idlist, open('output.txt', 'a') as outfile, open('amazon_proxies.txt',
                                                                                      'a') as proxyfile:
         id_list = idlist.read().splitlines()
-        count = random.randrange(0, len(id_list) - 2, 1)
+        count = random.randrange(len(id_list) - 100, len(id_list) - 2, 1)
+        success_count = 0
         for id in id_list:
             data = scrape(f'https://www.amazon.com/dp/{id_list[count]}', proxy={'http': proxy_list[proxy_count]},
                           headers=fakeHeader)
-            sleep(3)
+            print(f'MEVCUT TOPLAM = {len(id_list)}')
             if proxy_count == len(proxy_list) - 1:
                 proxy_count = 0
             else:
                 proxy_count += 1
             if data:
                 try:
-                    again_count = 0
+                    if success_count > 5:
+                        sleep(200)
+                        success_count = 0
+                    status = False
                     for id in data['links']:
                         if '/dp/' in id:
                             new_id = id.split('/dp/')[-1].split('?')[0].split('/')[0]
                             if new_id not in id_list:
-                                again_count += 1
+                                status = True
                                 outfile.write(new_id)
                                 id_list.append(new_id)
                                 outfile.write('\n')
                                 print(f'{count}. id\'deyiz          BAŞARILI')
 
+                    if status:
+                        success_count += 1
+                    print(f'{status} ve {success_count}')
                     count += 1
+                    sleep(10)
                 except TypeError:
                     print(f'{count}. id\'deyiz          Recaptcha! Proxy değiştiriyoruz {proxy_count}')
-                    sleep(3)
+
